@@ -97,7 +97,17 @@ The lack of valuable information on the four other albums apart from studio albu
 ## **3.3 Weeks on Billboard vs Peak Billboard Position**
 
 ```{r}
-albums_gg + geom_point(aes(x=weeks_on_billboard,y=peak_billboard_position)) + labs(title='Weeks on Billboard vs Peak Billboard Position Scatter Plot', x='Weeks on Billboard',y='Peak Billboard Position')
+albums_gg + 
+  geom_point(aes(x = weeks_on_billboard, 
+                 y = peak_billboard_position, 
+                 color = ifelse(release_year >= 2000, 'after 2000', 'before 2000'))) +
+  labs(title = 'Weeks on Billboard vs Peak Billboard Position Scatter Plot', 
+       x = 'Weeks on Billboard', 
+       y = 'Peak Billboard Position') +
+  scale_color_manual(values = c('before 2000' = 'steelblue', 'after 2000' = 'orange'), 
+                     labels = c('Before 2000', 'After 2000'),
+                     name = NULL)
+
 ```
 
 The [correlation]{style="color: cyan; font-family:times-new-roman; font-size:16px"} between the two variables is `r round(cor(albums$weeks_on_billboard, albums$peak_billboard_position, use="complete.obs"),2)`. For reference, a better performing album means the peak billboard position would be closer to one. This would explain the negative correlation which indicates as the weeks on billboard increases, the peak billboard position decreases, or moves closer to the top position being 1. The correlation is quite low, but provides a perspective on the trend of the two variables.
