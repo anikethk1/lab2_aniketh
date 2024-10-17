@@ -1,0 +1,128 @@
+---
+title: "Rolling Stone's Top 500 Albums in 2020"
+author: "Aniketh Kalagara"
+date: "2024-09-20"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE, message=FALSE)
+```
+
+```{r}
+library(tidyverse)
+albums <- read.csv('Project1_Albums.csv')
+```
+
+# **1. Introduction**
+
+The Rolling Stone is a monthly magazine that covers a variety of fields such as music, film, television, and politics. This specific report will be discussing data acquired related to the top 500 ranked albums according to the magazine in 2020. In particular, the report will discuss an outcome variable of the number of weeks the album was on the billboard charts. The number of weeks the album was on the charts will be compared to the popularity of the album on Spotify, the type of the album produced by the artist, and the peak billboard position.
+
+<center>
+
+![*Rolling Stone Top 500*](C:\Users\anike\OneDrive\Desktop\SDS%20313\Project%201\Rolling%20Stone.png)
+
+</center>
+
+<center>
+
+To read more about the Rolling Stone and the progression of their top 500, check the following link out:
+
+<https://pudding.cool/2024/03/greatest-music/>
+
+</center>
+
+# **2. Outcome Variable Discussion**
+
+The outcome variable as discussed above is the number of weeks the different albums were on the billboard. Below is a histogram showing the distribution of these top 500 albums time on the billboard in terms of weeks.
+
+```{r}
+library(ggplot2)
+albums <- filter(albums, !is.na(weeks_on_billboard))
+albums_gg <- ggplot(albums)
+albums_gg + geom_histogram(aes(x=weeks_on_billboard),binwidth=20) +
+    labs(title='Histogram of the Number of Weeks Albums were on the Billboard',x='Weeks',y='Frequency') + scale_x_continuous(breaks=seq(0,800,50))
+```
+
+To understand the distribution of the histogram, we need the median, standard deviation and five number summary. The statistics are as follows, the [median]{style="color: blue; font-family:times-new-roman; font-size:16px"}: `r round(median(albums$weeks_on_billboard, na.rm = TRUE),2)`, [the standard deviation]{style="color: red; font-family:times-new-roman; font-size:16px"}: `r round(sd(albums$weeks_on_billboard, na.rm = TRUE),2)`, and the [five number summary]{style="color: orange; font-family:times-new-roman; font-size:16px"}: `r round(fivenum(albums$weeks_on_billboard),2)`. The heavy segment of the values are based towards the left end of the histogram indicated by the median and the fairly large standard deviation showing skew with the distribution, concluding the same to be a [positive skewed distribution]{style="color: green; font-family:times-new-roman; font-size:16px"}.
+
+# **3. Bivariate Analyses**
+
+## **3.1 Weeks on Billboard vs Spotify Popularity**
+
+```{r}
+albums_gg + geom_point(aes(x=weeks_on_billboard,y=spotify_popularity)) + labs(title='Weeks on Billboard vs Spotify Popularity Scatter Plot', x='Weeks on Billboard',y='Spotify Popularity')
+```
+
+To understand the bivariate distribution of the scatter plot, we need the [pearson correlation coefficient (r)]{style="color: purple; font-family:times-new-roman; font-size:16px"}: `r round(cor(albums$weeks_on_billboard, albums$spotify_popularity, use="complete.obs"),2)`. The value obtained has a low positive correlation, but not completely no correlation and as seen by the graph, a lot of the points are concentrated towards the lower end on the weeks on billboard but overall, as the weeks on billboard increased, so does the Spotify popularity, possibly indicating that having a high album on the billboard is affected by a lot of Spotify listeners or vice-versa.
+
+## **3.2 Weeks on Billboard vs Album Type**
+
+```{r}
+library(RColorBrewer)
+albums_gg + geom_histogram(aes(x=weeks_on_billboard, na.rm = TRUE),col='black',fill='dark red')  + labs(title='Distribution of Weeks on Billboard based on Album Type',x='Weeks on Billboard',y='Frequency') + theme(legend.position='bottom') + scale_fill_brewer(type='qual',palette=2) + facet_wrap(~type)
+```
+
+##### Median Weeks on Billboard
+
+```{r}
+aggregate(weeks_on_billboard~type, data=albums, median)
+```
+
+##### SD of Weeks on Billboard
+
+```{r}
+aggregate(weeks_on_billboard~type, data=albums, sd)
+```
+
+##### Five Number Summary for Weeks on Billboard
+
+```{r}
+aggregate(weeks_on_billboard~type, data=albums, fivenum)
+```
+
+##### Number of Albums
+
+```{r}
+table(albums$type)
+```
+
+The graph shows the distribution of the weeks on billboard based on the five different album types. As seen, the different statistics are calculated for each album type, where studio has the largest value for the median weeks and standard deviation, along with having a large variety of number of weeks on the billboard. This can also be associated with the studio albums having a much larger quantity with 397 versus the other albums having less than 15 of their type. This also shows how these albums and their distribution don't provide an accurate representation of how such album types affect the weeks on billboard due to the small sample size. To learn more about the different types of albums, also known as discography, the following link can be a great resource: <https://rateyourmusic.com/wiki/Music:Release+types>
+
+The lack of valuable information on the four other albums apart from studio albums make it difficult to specify a distribution type, but as seen by the median value being towards the left, the graph being very heavily concentrated towards the left of the histogram and the gradual increase in the quartiles, with an extremely large upper quartile, the studio albums produce a [positive skewed distribution]{style="color: brown; font-family:times-new-roman; font-size:16px"}.
+
+## **3.3 Weeks on Billboard vs Peak Billboard Position**
+
+```{r}
+albums_gg + geom_point(aes(x=weeks_on_billboard,y=peak_billboard_position)) + labs(title='Weeks on Billboard vs Peak Billboard Position Scatter Plot', x='Weeks on Billboard',y='Peak Billboard Position')
+```
+
+The [correlation]{style="color: cyan; font-family:times-new-roman; font-size:16px"} between the two variables is `r round(cor(albums$weeks_on_billboard, albums$peak_billboard_position, use="complete.obs"),2)`. For reference, a better performing album means the peak billboard position would be closer to one. This would explain the negative correlation which indicates as the weeks on billboard increases, the peak billboard position decreases, or moves closer to the top position being 1. The correlation is quite low, but provides a perspective on the trend of the two variables.
+
+As seen previously, the most popular album type by a good amount are studio albums, to understand why artists choose studio albums to produce, the peak billboard position of such albums can be correlated to their weeks on the billboard as a measure of why they choose such albums as both metrics are a measure of their performance. By creating a subset of the dataset and analyzing the results for only studio albums through the scatter plot and correlation, a better understanding of this decision by artists can be made.
+
+```{r}
+studio_albums <- albums[albums$type=="Studio",]
+studio_albums_gg <- ggplot(studio_albums)
+studio_albums_gg + geom_point(aes(x=weeks_on_billboard,y=peak_billboard_position)) + labs(title='Weeks on Billboard vs Peak Billboard Position Scatter Plot for Studio Albums', x='Weeks on Billboard',y='Peak Billboard Position')
+```
+
+The [correlation]{style="color: cyan; font-family:times-new-roman; font-size:16px"} between the two variables for the subset is `r round(cor(studio_albums$weeks_on_billboard, studio_albums$peak_billboard_position, use="complete.obs"),2)`. The correlation pretty much stayed the same, which could indicate that album performance might not be the reason for the popularity of studio albums, and could correlate to ease of production, ease of distribution or other reasons. The graph also looks very similar to the graph produced to the overall dataset, further backing this analysis.
+
+# **4. Choice Elements**
+
+The report uses specific choice elements to enhance the readability of the report. Many in-line codes are used throughout sections 2 and 3 to show the different bivariate and univariate statistics displayed during graph analysis. There are two hyperlinks within the report, the first being in section 1 for the progression of the top 500 albums on the Rolling 500 and section 3.2 to understand the different type of albums. To highlight the statistics and distribution, the color, font and size of the text is changed throughout the analysis in sections 2 and 3. The header of the report contains a floating table of contents to make navigation easier. Finally, a subset is created for only studio albums in section 3.3 to further enhance the analysis of the peak billboard position as a predictor variable.
+
+# **5. Conclusion**
+
+In conclusion, albums have a lot of factors which affect the weeks on the billboard and many variables which correlate to trends in changes in the weeks an album is on the billboard. A high album popularity on Spotify would also mean more weeks on the billboard, and a higher peak ranking on the billboard. Most albums remain on the billboard for about 50 weeks with a large deviation in possible values due to different people and their music tastes. To further study the same, understanding the most popular music tastes among people by analyzing the weeks on the billboard or Spotify popularity with the genre could be a very interesting area of study. Another area could be measuring how time has changed popularity in certain artists, do old albums still gain the same traction they may have received before or is it the opposite.
+
+## **5.1 References**
+
+-   <https://github.com/rfordatascience/tidytuesday/blob/master/data/2024/2024-05-07/readme.m>
+-   <https://pudding.cool/2024/03/greatest-music/>
+-   <https://rateyourmusic.com/wiki/Music:Release+types>
+-   <https://pelhamexaminer.com/37166/entertainment/rolling-stones-the-500-greatest-albums-of-all-time-the-good-the-bad-and-the-70s-part-1/>
